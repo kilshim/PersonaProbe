@@ -1,0 +1,5 @@
+{
+  "name": "PersonaProbe",
+  "description": "제품 아이디어를 기반으로 동적인 페르소나를 생성하고 Gemini API를 사용하여 현실적인 인터뷰를 시뮬레이션하는 AI 기반 사용자 리서치 도구입니다.",
+  "requestFramePermissions": []
+}
