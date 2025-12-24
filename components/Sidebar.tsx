@@ -21,10 +21,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onLoadInterview,
   onDeleteInterview
 }) => {
-  const [isOpen, setIsOpen] = useState(true);
+  // Initialize based on screen width
+  const [isOpen, setIsOpen] = useState(false);
   const [tempKey, setTempKey] = useState(apiKey);
   const [isSaved, setIsSaved] = useState(false);
   const [activeTab, setActiveTab] = useState<'settings' | 'history'>('settings');
+
+  // Check for desktop size on mount to auto-open sidebar if space permits
+  useEffect(() => {
+    if (window.innerWidth >= 1024) {
+      setIsOpen(true);
+    }
+  }, []);
 
   useEffect(() => {
     setTempKey(apiKey);
@@ -43,23 +51,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
     localStorage.removeItem('gemini_api_key');
   };
 
+  // Function to close sidebar on mobile when item is clicked
+  const handleMobileClose = () => {
+    if (window.innerWidth < 1024) {
+      setIsOpen(false);
+    }
+  };
+
   return (
     <>
-      {/* Mobile Toggle */}
+      {/* Mobile Toggle Button */}
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white dark:bg-gray-800 rounded-lg shadow-md text-gray-600 dark:text-gray-300"
+        className="lg:hidden fixed top-3 left-4 z-50 p-2.5 bg-white dark:bg-gray-800 rounded-lg shadow-md text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        aria-label="Toggle Sidebar"
       >
-        {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </button>
+
+      {/* Mobile Backdrop Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 lg:hidden animate-fade-in"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
 
       {/* Sidebar Container */}
       <div className={`
         fixed top-0 left-0 h-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-r border-gray-200 dark:border-gray-800 
-        w-80 transition-transform duration-300 ease-in-out z-40 overflow-y-auto flex flex-col
+        w-80 transition-transform duration-300 ease-in-out z-40 overflow-y-auto flex flex-col shadow-2xl lg:shadow-none
         ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static flex-shrink-0
       `}>
-        <div className="p-6 pb-0">
+        <div className="p-6 pb-0 pt-16 lg:pt-6">
            {/* Header */}
           <div className="flex items-center space-x-2 mb-6">
             <div className="bg-indigo-600 p-2 rounded-lg">
@@ -210,7 +234,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <div key={interview.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 shadow-sm hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors group relative">
                     <div 
                       className="cursor-pointer"
-                      onClick={() => onLoadInterview(interview)}
+                      onClick={() => {
+                        onLoadInterview(interview);
+                        handleMobileClose();
+                      }}
                     >
                       <div className="flex items-center justify-between mb-2">
                          <div className="flex items-center">

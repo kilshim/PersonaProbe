@@ -227,7 +227,8 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 font-sans text-gray-800 dark:text-gray-100 transition-colors duration-300 flex overflow-hidden">
+    // Use h-[100dvh] for mobile browsers to handle address bar correctly
+    <div className="h-[100dvh] bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 font-sans text-gray-800 dark:text-gray-100 transition-colors duration-300 flex overflow-hidden">
       
       {/* Sidebar */}
       <Sidebar 
@@ -241,15 +242,16 @@ const App: React.FC = () => {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col h-full overflow-hidden relative">
         {/* Header / Nav */}
-        <nav className="bg-white/70 dark:bg-gray-900/70 backdrop-blur-md border-b border-white/20 dark:border-gray-800 px-6 py-4 flex-shrink-0 z-30 transition-colors">
+        <nav className="bg-white/70 dark:bg-gray-900/70 backdrop-blur-md border-b border-white/20 dark:border-gray-800 px-4 sm:px-6 py-4 flex-shrink-0 z-20 transition-colors">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
+            {/* Added ml-12 to avoid overlap with mobile hamburger menu */}
             <div className="flex items-center space-x-3 cursor-pointer ml-12 lg:ml-0" onClick={() => window.location.reload()}>
               <div className="bg-indigo-600 p-2 rounded-lg">
                 <Users className="w-5 h-5 text-white" />
               </div>
-              <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400">
+              <h1 className="text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-400 dark:to-purple-400 truncate">
                 PersonaProbe
               </h1>
             </div>
@@ -262,10 +264,10 @@ const App: React.FC = () => {
         </nav>
 
         {/* Scrollable Main Content */}
-        <main className={`flex-1 transition-all duration-300 ${
+        <main className={`flex-1 transition-all duration-300 relative ${
           step === 'interview' 
             ? 'overflow-hidden flex flex-col' // Full height for interview, internal scroll
-            : 'overflow-y-auto pt-8 pb-12 px-4 sm:px-6 lg:px-8 scroll-smooth'
+            : 'overflow-y-auto pt-4 sm:pt-8 pb-12 px-3 sm:px-6 lg:px-8 scroll-smooth'
         }`}>
           {step === 'input' && (
             <IdeaInput 
@@ -285,7 +287,7 @@ const App: React.FC = () => {
           )}
 
           {step === 'interview' && selectedPersona && (
-            <div className="flex-1 h-full w-full max-w-5xl mx-auto p-2 sm:p-4 flex flex-col">
+            <div className="flex-1 h-full w-full max-w-5xl mx-auto sm:p-4 flex flex-col">
               <ChatInterface 
                 idea={idea}
                 persona={selectedPersona}
