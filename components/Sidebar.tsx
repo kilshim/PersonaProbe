@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Key, Moon, Sun, BookOpen, Trash2, Check, ExternalLink, Menu, X, History, MessageSquare } from 'lucide-react';
+import { Settings, Moon, Sun, BookOpen, Trash2, History, MessageSquare, Menu, X, Key, Check } from 'lucide-react';
 import { SavedInterview } from '../types';
 
 interface SidebarProps {
-  apiKey: string;
-  setApiKey: (key: string) => void;
   isDark: boolean;
   toggleTheme: () => void;
   savedInterviews: SavedInterview[];
@@ -13,45 +11,53 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
-  apiKey, 
-  setApiKey, 
   isDark, 
   toggleTheme,
   savedInterviews,
   onLoadInterview,
   onDeleteInterview
 }) => {
-  // Initialize based on screen width
   const [isOpen, setIsOpen] = useState(false);
-  const [tempKey, setTempKey] = useState(apiKey);
-  const [isSaved, setIsSaved] = useState(false);
   const [activeTab, setActiveTab] = useState<'settings' | 'history'>('settings');
+  
+  // API Key Local State
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [isSaved, setIsSaved] = useState(false);
 
-  // Check for desktop size on mount to auto-open sidebar if space permits
   useEffect(() => {
     if (window.innerWidth >= 1024) {
       setIsOpen(true);
     }
+
+    // Load API Key from sessionStorage on mount
+    const savedKey = sessionStorage.getItem('GEMINI_API_KEY');
+    if (savedKey) {
+      setApiKeyInput(savedKey);
+      // Sync with process.env for the SDK
+      syncEnvKey(savedKey);
+    }
   }, []);
 
-  useEffect(() => {
-    setTempKey(apiKey);
-  }, [apiKey]);
+  const syncEnvKey = (key: string) => {
+    // Ensure process.env is available for the SDK to read from
+    if (!(window as any).process) (window as any).process = { env: {} };
+    if (!(window as any).process.env) (window as any).process.env = {};
+    (window as any).process.env.API_KEY = key;
+  };
 
   const handleSaveKey = () => {
-    setApiKey(tempKey);
-    localStorage.setItem('gemini_api_key', tempKey);
+    sessionStorage.setItem('GEMINI_API_KEY', apiKeyInput);
+    syncEnvKey(apiKeyInput);
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2000);
   };
 
   const handleDeleteKey = () => {
-    setApiKey('');
-    setTempKey('');
-    localStorage.removeItem('gemini_api_key');
+    sessionStorage.removeItem('GEMINI_API_KEY');
+    setApiKeyInput('');
+    syncEnvKey('');
   };
 
-  // Function to close sidebar on mobile when item is clicked
   const handleMobileClose = () => {
     if (window.innerWidth < 1024) {
       setIsOpen(false);
@@ -60,7 +66,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Mobile Toggle Button */}
       <button 
         onClick={() => setIsOpen(!isOpen)}
         className="lg:hidden fixed top-3 left-4 z-50 p-2.5 bg-white dark:bg-gray-800 rounded-lg shadow-md text-gray-600 dark:text-gray-300 border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
@@ -69,7 +74,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
       </button>
 
-      {/* Mobile Backdrop Overlay */}
       {isOpen && (
         <div 
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 lg:hidden animate-fade-in"
@@ -77,14 +81,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         />
       )}
 
-      {/* Sidebar Container */}
       <div className={`
         fixed top-0 left-0 h-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-r border-gray-200 dark:border-gray-800 
         w-80 transition-transform duration-300 ease-in-out z-40 overflow-y-auto flex flex-col shadow-2xl lg:shadow-none
         ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static flex-shrink-0
       `}>
         <div className="p-6 pb-0 pt-16 lg:pt-6">
-           {/* Header */}
           <div className="flex items-center space-x-2 mb-6">
             <div className="bg-indigo-600 p-2 rounded-lg">
               <Settings className="w-5 h-5 text-white" />
@@ -92,7 +94,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <h1 className="text-xl font-bold text-gray-800 dark:text-white">설정</h1>
           </div>
 
-          {/* Tabs */}
           <div className="flex space-x-2 mb-6 border-b border-gray-200 dark:border-gray-700">
              <button
                 onClick={() => setActiveTab('settings')}
@@ -123,7 +124,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
           
           {activeTab === 'settings' && (
             <>
-              {/* Theme Toggle */}
+              {/* API Key Management */}
+              <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
+                <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 flex items-center">
+                  <Key className="w-4 h-4 mr-2" /> Gemini API Key
+                </h3>
+                <div className="space-y-3">
+                  <input
+                    type="password"
+                    value={apiKeyInput}
+                    onChange={(e) => setApiKeyInput(e.target.value)}
+                    placeholder="API 키를 입력하세요"
+                    className="w-full p-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  />
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={handleSaveKey}
+                      className={`flex-1 py-2 rounded-lg text-sm font-bold text-white transition-all flex items-center justify-center ${
+                        isSaved ? 'bg-green-500' : 'bg-indigo-600 hover:bg-indigo-700'
+                      }`}
+                    >
+                      {isSaved ? <Check className="w-4 h-4 mr-1" /> : null}
+                      {isSaved ? '저장됨' : '저장'}
+                    </button>
+                    <button
+                      onClick={handleDeleteKey}
+                      className="px-3 py-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                      title="삭제"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500 text-center">
+                    키는 세션 중에만 유지됩니다 (sessionStorage)
+                  </p>
+                </div>
+              </div>
+
               <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
                 <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 flex items-center">
                   <Moon className="w-4 h-4 mr-2" /> 테마 설정
@@ -143,79 +180,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </button>
               </div>
 
-              {/* API Key Management */}
-              <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
-                <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 flex items-center">
-                  <Key className="w-4 h-4 mr-2" /> API 키 관리
-                </h3>
-                
-                <div className="space-y-3">
-                  <input
-                    type="password"
-                    value={tempKey}
-                    onChange={(e) => setTempKey(e.target.value)}
-                    placeholder="Gemini API Key 입력"
-                    className="w-full p-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                  />
-                  
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={handleSaveKey}
-                      className={`flex-1 flex items-center justify-center py-2 rounded-lg text-sm font-medium transition-colors ${
-                        isSaved 
-                          ? 'bg-green-500 text-white' 
-                          : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                      }`}
-                    >
-                      {isSaved ? <Check className="w-4 h-4 mr-1" /> : '저장'}
-                    </button>
-                    <button
-                      onClick={handleDeleteKey}
-                      className="px-3 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-                
-                <a 
-                  href="https://aistudio.google.com/app/apikey" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="mt-3 text-xs text-indigo-600 dark:text-indigo-400 hover:underline flex items-center"
-                >
-                  API 키 무료로 발급받기 <ExternalLink className="w-3 h-3 ml-1" />
-                </a>
-              </div>
-
-              {/* User Guide */}
               <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
                  <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 flex items-center">
                   <BookOpen className="w-4 h-4 mr-2" /> 사용 가이드
                 </h3>
                 <ul className="space-y-4">
                   <li className="relative pl-4 border-l-2 border-indigo-200 dark:border-indigo-800">
-                    <p className="text-xs font-bold text-gray-700 dark:text-gray-300">1. API 키 설정</p>
+                    <p className="text-xs font-bold text-gray-700 dark:text-gray-300">1. 서비스 분석</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Google AI Studio에서 무료 API 키를 발급받아 위 입력창에 저장하세요.
+                      구상 중인 제품 아이디어를 입력하여 가상 사용자를 생성하세요.
                     </p>
                   </li>
                   <li className="relative pl-4 border-l-2 border-indigo-200 dark:border-indigo-800">
-                    <p className="text-xs font-bold text-gray-700 dark:text-gray-300">2. 아이디어 입력</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      구상 중인 서비스나 제품에 대한 설명을 구체적으로 작성하세요.
-                    </p>
-                  </li>
-                  <li className="relative pl-4 border-l-2 border-indigo-200 dark:border-indigo-800">
-                    <p className="text-xs font-bold text-gray-700 dark:text-gray-300">3. 페르소나 선택</p>
+                    <p className="text-xs font-bold text-gray-700 dark:text-gray-300">2. 페르소나 선택</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       AI가 생성한 5명의 가상 사용자 중 인터뷰하고 싶은 대상을 선택하세요.
                     </p>
                   </li>
                   <li className="relative pl-4 border-l-2 border-indigo-200 dark:border-indigo-800">
-                    <p className="text-xs font-bold text-gray-700 dark:text-gray-300">4. 요약 및 저장</p>
+                    <p className="text-xs font-bold text-gray-700 dark:text-gray-300">3. 대화 시뮬레이션</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      인터뷰 후 '요약 및 저장' 버튼을 눌러 리포트를 생성하고 저장하세요.
+                      선택한 페르소나와 자유롭게 대화하며 제품 피드백을 수집하세요.
+                    </p>
+                  </li>
+                  <li className="relative pl-4 border-l-2 border-indigo-200 dark:border-indigo-800">
+                    <p className="text-xs font-bold text-gray-700 dark:text-gray-300">4. 리포트 생성</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      인터뷰 내용을 AI가 요약하여 핵심 인사이트를 도출해 드립니다.
                     </p>
                   </li>
                 </ul>
@@ -274,9 +265,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
 
           <div className="pt-4 text-center mt-auto">
-            <p className="text-xs text-gray-400 dark:text-gray-500">
-              © 2025 PersonaProbe<br/>Powered by Google Gemini
-            </p>
+            <a 
+              href="https://xn--design-hl6wo12cquiba7767a.com/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-xs text-gray-400 dark:text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+            >
+              떨림과울림Design.com
+            </a>
           </div>
 
         </div>

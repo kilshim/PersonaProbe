@@ -13,7 +13,11 @@ interface ErrorBoundaryState {
 
 // Error Boundary to prevent white screens on crash
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  state: ErrorBoundaryState = { hasError: false, error: null };
+  // Fix: Explicitly define the state and constructor to resolve TS property 'props' issues
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
@@ -24,7 +28,11 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 
   render() {
-    if (this.state.hasError) {
+    // Fix: Destructure state and props for cleaner access
+    const { hasError, error } = this.state;
+    const { children } = this.props;
+
+    if (hasError) {
       return (
         <div style={{ padding: '2rem', textAlign: 'center', fontFamily: 'sans-serif' }}>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem', color: '#e11d48' }}>
@@ -34,7 +42,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
             앱을 실행하는 도중 문제가 생겼습니다. 아래 버튼을 눌러 새로고침 해주세요.
           </p>
           <pre style={{ background: '#f3f4f6', padding: '1rem', borderRadius: '0.5rem', marginBottom: '1.5rem', overflow: 'auto', textAlign: 'left', fontSize: '0.875rem' }}>
-            {this.state.error?.message}
+            {error?.message}
           </pre>
           <button 
             onClick={() => window.location.reload()} 
@@ -54,7 +62,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       );
     }
 
-    return this.props.children;
+    return children;
   }
 }
 

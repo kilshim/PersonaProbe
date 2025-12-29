@@ -54,15 +54,10 @@ export const PersonaList: React.FC<PersonaListProps> = ({ personas, onSelect, on
       return;
     }
 
-    const apiKey = localStorage.getItem('gemini_api_key');
-    if (!apiKey) {
-      alert("API 키가 없습니다. 설정에서 키를 등록해주세요.");
-      return;
-    }
-
+    // Fix: Removed manual API key retrieval and check; handled by internal service configuration
     setIsAnalyzing(true);
     try {
-      const result = await analyzePersonaFromData(rawData, apiKey);
+      const result = await analyzePersonaFromData(rawData);
       
       setCustomPersona({
         ...result,
@@ -178,7 +173,6 @@ export const PersonaList: React.FC<PersonaListProps> = ({ personas, onSelect, on
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90%] flex flex-col overflow-hidden animate-fade-in-up">
             
-            {/* Header */}
             <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-indigo-50 dark:bg-gray-800/50">
               <h3 className="font-bold text-lg text-indigo-800 dark:text-indigo-300">새 페르소나 생성</h3>
               <button onClick={() => setShowCustomModal(false)} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
@@ -186,7 +180,6 @@ export const PersonaList: React.FC<PersonaListProps> = ({ personas, onSelect, on
               </button>
             </div>
             
-            {/* Tabs */}
             <div className="flex border-b border-gray-200 dark:border-gray-700">
                <button 
                   onClick={() => setActiveTab('manual')}
