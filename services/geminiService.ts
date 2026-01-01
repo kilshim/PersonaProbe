@@ -1,22 +1,22 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Persona, Message } from "../types";
 
-// Helper to ensure the API key from sessionStorage is used via process.env.API_KEY
-const syncApiKey = () => {
+// Helper to get API key from storage or env
+const getApiKey = (): string => {
   if (typeof window !== 'undefined') {
     const storedKey = sessionStorage.getItem('GEMINI_API_KEY');
-    if (storedKey) {
-      // @ts-ignore - Ensure process.env is treated as a mutable object for injection
-      if (!window.process) window.process = { env: {} };
-      // @ts-ignore
-      window.process.env.API_KEY = storedKey;
-    }
+    if (storedKey) return storedKey;
   }
+  return process.env.API_KEY || '';
 };
 
 export const generatePersonas = async (idea: string): Promise<Persona[]> => {
-  syncApiKey();
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    throw new Error("API Key가 설정되지 않았습니다. 사이드바 설정에서 API Key를 입력해주세요.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   const modelId = "gemini-3-flash-preview";
   
   const prompt = `
@@ -83,7 +83,7 @@ export const generatePersonas = async (idea: string): Promise<Persona[]> => {
     if (error.message) {
       if (error.message.includes("429")) {
         errorMessage = "요청이 너무 많습니다. 잠시 후 다시 시도해주세요. (429 Error)";
-      } else if (error.message.includes("API key") || error.message.includes("403") || error.message.includes("invalid")) {
+      } else if (error.message.includes("API key") || error.message.includes("403") || error.message.includes("invalid") || error.message.includes("must be set")) {
         errorMessage = "API 키가 올바르지 않거나 설정되지 않았습니다. 사이드바 설정에서 API 키를 입력해주세요.";
       } else if (error instanceof SyntaxError) {
         errorMessage = "AI 응답 형식이 올바르지 않습니다. 다시 시도해주세요.";
@@ -97,8 +97,10 @@ export const generatePersonas = async (idea: string): Promise<Persona[]> => {
 };
 
 export const analyzePersonaFromData = async (data: string): Promise<Persona> => {
-  syncApiKey();
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error("API Key가 필요합니다.");
+
+  const ai = new GoogleGenAI({ apiKey });
   const modelId = "gemini-3-flash-preview";
 
   const prompt = `
@@ -151,8 +153,10 @@ export const analyzePersonaFromData = async (data: string): Promise<Persona> => 
 };
 
 export const createChatSession = (persona: Persona, idea: string) => {
-  syncApiKey();
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error("API Key가 필요합니다.");
+
+  const ai = new GoogleGenAI({ apiKey });
   
   const systemInstruction = `
     당신은 ${persona.name}이라는 특정 페르소나를 연기해야 합니다.
@@ -189,8 +193,10 @@ export const summarizeInterview = async (
   idea: string, 
   persona: Persona
 ): Promise<string> => {
-  syncApiKey();
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error("API Key가 필요합니다.");
+
+  const ai = new GoogleGenAI({ apiKey });
   const modelId = "gemini-3-flash-preview";
 
   const conversationText = messages

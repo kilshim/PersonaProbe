@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { Component, ReactNode } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
 interface ErrorBoundaryProps {
-  children: React.ReactNode;
+  children?: ReactNode;
 }
 
 interface ErrorBoundaryState {
@@ -12,7 +12,9 @@ interface ErrorBoundaryState {
 }
 
 // Error Boundary to prevent white screens on crash
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  public state: ErrorBoundaryState;
+
   // Fix: Explicitly define the state and constructor to resolve TS property 'props' issues
   constructor(props: ErrorBoundaryProps) {
     super(props);
